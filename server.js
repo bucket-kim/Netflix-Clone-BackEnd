@@ -4,6 +4,7 @@ const port = 3000;
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 require('dotenv').config();
+const cors = require('cors')
 
 mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.mmmu4.mongodb.net/netflix-backend?retryWrites=true&w=majority`, {
   useNewUrlParser: true, 
@@ -23,8 +24,9 @@ const User = mongoose.model('users', new Schema({
     required: true,
   }, 
 
-}))
+}));
 
+app.use(cors());
 
 app.use(express.json());
 
@@ -63,7 +65,8 @@ app.post('/login', (req, res) => {
   }, (err, user) => {
     if(user) {
       res.send({
-        status: "valid"
+        status: "valid",
+        token: user.id
       });
     } else {
       res.send(404, {
