@@ -43,14 +43,14 @@ app.post('/register', (req, res) => {
 
   newUser.save((err, user) => {
     if (err) {
-      console.log(err);
+      // user already exists
       res.send(400, {
         status: err
       })
     } else {
-      console.log("It's all good");
-      console.log(user);
-      res.send('registered');
+      res.send({
+        status: "Registered"
+      });
     }
   })
 });
