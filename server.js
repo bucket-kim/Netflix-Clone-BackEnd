@@ -13,7 +13,8 @@ mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PA
   useCreateIndex:true,
 });
 
-const User = mongoose.model('users', new Schema({
+const User = mongoose.model('users', new Schema(
+  {
   name: String,
   email: {
     type: String,
@@ -24,8 +25,23 @@ const User = mongoose.model('users', new Schema({
     type: String, 
     required: true,
   }, 
-
 }));
+
+const WishlistSchema = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "users"
+    },
+    movieId: Number, 
+    backdrop_path: String,
+    title: String
+  }
+);
+
+WishlistSchema.index({ user: 1, movieId: 1}, { unique: true });
+
+const Wishlist = mongoose.model('wishlist', WishlistSchema);
 
 app.use(cors());
 
@@ -45,15 +61,45 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.get('/wishlist', authenticateToken, (req, res) => {
-  res.send({
-    items: [
-      "The Avengers", 
-      "Tenet", 
-      "Queens Gambit"
-    ]
+app.post('/wishlist', authenticateToken, (req, res) => {
+
+  const newWishListItem = new Wishlist({
+    user: req.user.id,
+    movieId: req.body.movieId, 
+    backdrop_path: req.body.backdrop_path, 
+    title: req.body.title
   });
+
+  newWishListItem.save((err, wishListItem) => {
+    if (err) {
+      res.send(400, {
+        status: err
+      })
+    } else {
+      res.send({
+        wishListItem: wishListItem, 
+        status: "saved"
+      })
+    }
+  })
+});
+
+app.get('/wishlist', authenticateToken, (req, res) => {
+  Wishlist.find({ user: req.user.id },(err, docs) => {
+    if (err) {
+      res.send(400, {
+        status: err
+      })
+    } else {
+      res.send({
+        status: "good", 
+        results: docs
+      })
+    }
+  })
 })
+
+
 
 app.post('/register', (req, res) => {
   const newUser = new User({
